@@ -1,6 +1,7 @@
 package com.countryservice.demo.controllers;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,9 +26,15 @@ public class CountryController {
      CountryService countryservice;
      
      @GetMapping("/getcountries")
-     public List getCountries()
+     public ResponseEntity<List<Country>> getCountries()
      {
-    	 return countryservice.getAllCountries();
+    	try {
+    	List<Country> countries = countryservice.getAllCountries();
+		return new ResponseEntity<List<Country>>(countries,HttpStatus.OK);
+    	}
+    	catch(Exception e){
+    		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    	}
      }
      
      
@@ -60,12 +67,20 @@ public class CountryController {
      }
      
      @PostMapping("/addcountry")
-     public Country addCountry(@RequestBody Country country)
-     {
-    	 return countryservice.addCountry(country);
+     public ResponseEntity<Country> addCountry(@RequestBody Country country)
+     { 
+    	 try
+    	 {
+    	 countryservice.addCountry(country);
+    	 return new ResponseEntity<Country>(country, HttpStatus.CREATED);
+    	 }
+    	 catch(NoSuchElementException e)
+    	 {
+    		 return new ResponseEntity<>(HttpStatus.CONFLICT);
+    	 }
      }
      
-     @PutMapping("/updatecountry")
+     @PutMapping("/updatecountry/{id}")
      public ResponseEntity<Country> updatecountry(@PathVariable(value="id") int id, @RequestBody Country country)
      {
     	 try
@@ -85,9 +100,18 @@ public class CountryController {
      }
      
      @DeleteMapping("/deleteCountry/{id}")
-     public AddResponse deleteCountry(@PathVariable(value="id") int id) 
+     public ResponseEntity<Country> deleteCountry(@PathVariable(value="id") int id) 
      {
-    	 return countryservice.deleteCountry(id);
+    	 Country country =null;
+    	 try {
+    		 country=countryservice.getCountryById(id);
+    		 countryservice.deleteCountry(country);
+    	 }
+    	 catch(NoSuchElementException e){
+    		 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    	 }
+    	 return new ResponseEntity<Country>(country, HttpStatus.OK);
+    	 
      }
      
      
